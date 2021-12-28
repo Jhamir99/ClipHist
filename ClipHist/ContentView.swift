@@ -3,7 +3,7 @@
 //  ClipHist
 //
 //  Created by Jhamir Francisco Piminchumo on 21/12/21.
-//
+// 
 
 import SwiftUI
 

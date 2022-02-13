@@ -19,7 +19,12 @@ var itemClicked = false
 struct ContentView: View {
     @State var copiedItems : [CopiedItem] = []
     @State var modTimes = 0
-    let window = NSWindow()
+    
+    var window = NSWindow (
+            contentRect: NSRect(x: 0, y: 0, width: 250, height: 400), // just default
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered, defer: false
+        )
     
     var body: some View {
         VStack{
@@ -37,7 +42,9 @@ struct ContentView: View {
                         
                         if(latestItem != nil) {
                             let newci : CopiedItem = .init(id: copiedItems.count, value: latestItem!)
-                            copiedItems.append(newci)}
+                            copiedItems.append(newci)
+                            currentId.id = newci.id
+                        }
                     }
                     else {
                         modTimes += 1
@@ -48,7 +55,8 @@ struct ContentView: View {
                     }
                 }
             }
-        }//.keyboardShortcut("v", modifiers: [.control])
+        }
+        .frame(minWidth: 250, idealWidth: 250, minHeight: 400, idealHeight: 400)
     }
 }
 
@@ -59,22 +67,31 @@ struct ContentView_Previews: PreviewProvider {
 }
 
 struct CopiedItemRow : View {
-    let copiedItem: CopiedItem
+    @State var copiedItem: CopiedItem
     @State private var selectedItem = false
+    @State private var sameId : Bool = false
     
     var body: some View{
         Text(copiedItem.value)
             .frame(maxWidth: .infinity, maxHeight: 16*3, alignment: .leading)
             .padding()
-            .border(selectedItem ? Color.accentColor : Color.clear)
             .contentShape(Rectangle())
             .onTapGesture{
                 itemClicked = true
                 selectedItem = true
+                currentId.id = copiedItem.id
                 //Copy Item value to Pasteboard
                 let pasteboard = NSPasteboard.general
                 pasteboard.declareTypes([NSPasteboard.PasteboardType.string], owner: nil)
                 pasteboard.setString(copiedItem.value, forType: NSPasteboard.PasteboardType.string)
             }
+            .onPasteboardChange {
+                sameId = copiedItem.id == currentId.id
+            }
+            .border(sameId ? Color.accentColor : Color.clear)
     }
+}
+
+struct currentId {
+    static var id : Int = -1
 }

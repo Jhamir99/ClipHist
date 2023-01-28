@@ -8,10 +8,15 @@
 import SwiftUI
 import OnPasteboardChange
 
+struct currentId {
+    static var id : Int = -1
+}
+
 struct CopiedItem : Identifiable {
-    var id : Int
+    let id : Int
     let value : String
     var selected : Bool = false
+    let image : NSImage?
 }
 
 var itemClicked = false
@@ -38,10 +43,13 @@ struct ContentView: View {
                 .onPasteboardChange {
                     if(!itemClicked) {
                         print("The clipboard was changed!")
+                        
+                        let image = pasteboardImage();
+                        
                         let latestItem = NSPasteboard.general.pasteboardItems?.first?.string(forType: .string)
                         
                         if(latestItem != nil) {
-                            let newci : CopiedItem = .init(id: copiedItems.count, value: latestItem!)
+                            let newci : CopiedItem = .init(id: copiedItems.count, value: latestItem!, image: image)
                             copiedItems.append(newci)
                             currentId.id = newci.id
                         }
@@ -80,7 +88,7 @@ struct CopiedItemRow : View {
                 itemClicked = true
                 selectedItem = true
                 currentId.id = copiedItem.id
-                //Copy Item value to Pasteboard
+                //Copy Item value to NSPasteboard
                 let pasteboard = NSPasteboard.general
                 pasteboard.declareTypes([NSPasteboard.PasteboardType.string], owner: nil)
                 pasteboard.setString(copiedItem.value, forType: NSPasteboard.PasteboardType.string)
@@ -88,10 +96,41 @@ struct CopiedItemRow : View {
             .onPasteboardChange {
                 sameId = copiedItem.id == currentId.id
             }
-            .border(sameId ? Color.accentColor : Color.clear)
+            .overlay(
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(sameId ? Color.accentColor : Color.clear)
+                
+            )
+        
+        if(copiedItem.image != nil) {
+            Image(nsImage: copiedItem.image!).padding()
+        }
     }
 }
 
-struct currentId {
-    static var id : Int = -1
+
+
+//Pasteboard image
+//Write to clipboard
+func writeImageToPasteboard(img: NSImage)
+{
+    let pb = NSPasteboard.general
+    pb.clearContents()
+    pb.writeObjects([img])
+}
+
+//Read from clipboard
+func pasteboardImage() -> NSImage?
+{
+    let pb = NSPasteboard.general
+    var imgData = pb.data(forType: NSPasteboard.PasteboardType.tiff)
+    
+    if(imgData != nil) { return NSImage(data: imgData!) }
+    
+    imgData = pb.data(forType: NSPasteboard.PasteboardType.png);
+    NSImage(pasteboard: NSPasteboard.general)
+    
+    if(imgData != nil) { return NSImage(data: imgData!) }
+   
+    return nil;
 }

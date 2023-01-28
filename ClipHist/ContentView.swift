@@ -8,12 +8,10 @@
 import SwiftUI
 import OnPasteboardChange
 
-struct currentId {
-    static var id : Int = -1
-}
+var currentId = UUID()
 
 struct CopiedItem : Identifiable {
-    let id : Int
+    let id : UUID
     let value : String
     var selected : Bool = false
     let image : NSImage?
@@ -49,9 +47,9 @@ struct ContentView: View {
                         let latestItem = NSPasteboard.general.pasteboardItems?.first?.string(forType: .string)
                         
                         if(latestItem != nil) {
-                            let newci : CopiedItem = .init(id: copiedItems.count, value: latestItem!, image: image)
+                            let newci : CopiedItem = .init(id: UUID(), value: latestItem!, image: image)
                             copiedItems.append(newci)
-                            currentId.id = newci.id
+                            currentId = newci.id
                         }
                     }
                     else {
@@ -87,14 +85,15 @@ struct CopiedItemRow : View {
             .onTapGesture{
                 itemClicked = true
                 selectedItem = true
-                currentId.id = copiedItem.id
+                currentId = copiedItem.id
+                
                 //Copy Item value to NSPasteboard
                 let pasteboard = NSPasteboard.general
                 pasteboard.declareTypes([NSPasteboard.PasteboardType.string], owner: nil)
                 pasteboard.setString(copiedItem.value, forType: NSPasteboard.PasteboardType.string)
             }
             .onPasteboardChange {
-                sameId = copiedItem.id == currentId.id
+                sameId = copiedItem.id == currentId
             }
             .overlay(
                 RoundedRectangle(cornerRadius: 5)
